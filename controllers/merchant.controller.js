@@ -2,16 +2,22 @@ const { sendEmail } = require("../helpers/sendEmail");
 const merchantModel = require("../models/merchant.model");
 const { apiResponses } = require("../utils/apiResponses");
 const { asyncHandler } = require("../utils/asyncHandler");
+const userModel = require("../models/user.model");
+const { sendMerchantRequestEmail } = require("../helpers/sendEmailtoAdminforMerchantreq");
 
 exports.applyMerchantController = asyncHandler(async (req, res, next) => {
   let { user, storename, logo, phone } = req.body; // status hobe na cause ota just admin handle korbe
 
-  let merchant = await merchantModel.findOne({ _id: user });
+  let merchant = await merchantModel.findOne({ user : user });
 
-  if (merchant) {
-    apiResponses(res, 400, "Your role is already set as Merchant");
+  let userdata = await userModel.findOne({_id : user})
+         
+  if (merchant) { 
+    console.log(merchant);
+    
+    apiResponses(res, 400, "Your request has already been sent");
   } else {
-    let merchantapply = new merchantModel({
+ let merchantapply = new merchantModel({
       user,
       storename,
       logo,
@@ -19,7 +25,17 @@ exports.applyMerchantController = asyncHandler(async (req, res, next) => {
     });
 
     await merchantapply.save();
-   sendEmail(process.env.AUTH_EMAIL)
+  
+    await sendMerchantRequestEmail(
+      process.env.AUTH_EMAIL, // Admin Email
+        "Rafa",          // Admin Name
+        userdata.Name,          // Applicant Name
+         req.body.storename,  // Store Name
+               
+    );
+
+  
+   
     apiResponses(res, 200, "Your request for merchant post has been sent");
   }
 });
