@@ -35,54 +35,58 @@ exports.subcategoryController = asyncHandler(async (req, res, next) => {
   apiResponses(res, 200, "SubCategory Created", subcategory);
 });
 
-exports.updateSubcategoryController = asyncHandler(async (req, res, next) => {
-  let { id } = req.params;
- let { Name, category } = req.body || {};
 
-    let { filename } = req.file || {};  //access image through this, default vabe khali thakbe age
-  
-    // req.file = access for image, image update korar age ta delete kore nite hobe, then update hobe new img diye
-  
-    if (req.file) {
-      let subcategory = await subCategoryModel.findOne({ _id: id });
-      let filepath = subcategory.image.split("/"); // image's file location
-      let imagepath = filepath[filepath.length - 1];
-      let oldpath = path.join(__dirname, "../uploads"); // folder location
-  
-      fs.unlink(`${oldpath}/${imagepath}`, async (err) => {
-        if (err) {
-          apiResponses(res, 500, err.message);
-        } else {
-          let image = `${process.env.SERVER_URL}/${filename}`;
-          subcategory.image = image;
-          await subcategory.save();
-          apiResponses(res, 200, "Image updated");
-        }
-      });
-    } else {
-      if (category) {
-    await subCategoryModel.findOneAndUpdate(
-      { _id: id }, // je id pass korechi ta subcategorymodel e khujbe
-      { Name, category }, // req.body er moddhe je new info send krbo ta diye update krbe
-      { new: true },
-    );
-    await categoryModel.findOneAndUpdate(
-      { _id: category }, // subcategory err moddhe jei category er id pass korechi ta find krbe
-      { $push: { subcategory: id } }, // find korar por oi category er subcategory te push krbe
-      { new: true },
-    );
-    apiResponses(res, 200, "Sub Category Updated");
-  } else {
-    await subCategoryModel.findOneAndUpdate(
-      // this will only update Name
-      { _id: id },
-      { Name },
-      { new: true },
-    );
-    apiResponses(res, 200, "Subcategory's Name updated");
-  }
+exports.updateSubcategoryController = asyncHandler(async (req, res, next) => {
+    let { id } = req.params;
+    let { Name, category } = req.body;
+
+    // ১. প্রথমেই বর্তমান সাব-ক্যাটাগরি ডাটা খুঁজে বের করুন (Old Category ID জানার জন্য)
+    let subcategory = await subCategoryModel.findById(id);
+    if (!subcategory) {
+        return apiResponses(res, 404, "Subcategory not found");
     }
-  });
+
+    const oldCategoryId = subcategory.category;
+
+    // ২. ইমেজ আপডেট লজিক (যদি নতুন ফাইল থাকে)
+    if (req.file) {
+        const { filename } = req.file;
+        const oldImagePath = subcategory.image.split("/").pop();
+        const fullOldPath = path.join(__dirname, "../uploads", oldImagePath);
+
+        // পুরনো ফাইল ডিলিট
+        if (fs.existsSync(fullOldPath)) {
+            fs.unlinkSync(fullOldPath);
+        }
+        subcategory.image = `${process.env.SERVER_URL}/${filename}`;
+    }
+
+    // ৩. নাম আপডেট
+    if (Name) subcategory.Name = Name;
+
+    // ৪. ক্যাটাগরি পরিবর্তন লজিক (সবচেয়ে গুরুত্বপূর্ণ অংশ)
+    if (category && category.toString() !== oldCategoryId.toString()) {
+        
+        // ধাপ এ: পুরনো ক্যাটাগরি থেকে এই সাব-ক্যাটাগরির ID মুছে ফেলুন
+        await categoryModel.findByIdAndUpdate(oldCategoryId, {
+            $pull: { subcategory: id }
+        });
+
+        // ধাপ বি: নতুন ক্যাটাগরিতে এই সাব-ক্যাটাগরির ID যোগ করুন
+        // $addToSet ব্যবহার করা ভালো যাতে ডুপ্লিকেট না হয়
+        await categoryModel.findByIdAndUpdate(category, {
+            $addToSet: { subcategory: id }
+        });
+
+        // সাব-ক্যাটাগরি মডেলে নতুন ক্যাটাগরি সেট করুন
+        subcategory.category = category;
+    }
+
+    // ৫. সব পরিবর্তন সেভ করুন
+    const updatedData = await subcategory.save();
+
+    return apiResponses(res, 200, "Subcategory Updated Successfully", updatedData);
+});
    
 exports.deleteSubCtaegoryController = asyncHandler(async (req, res, next) => {
   let { id } = req.params;
@@ -94,7 +98,7 @@ exports.deleteSubCtaegoryController = asyncHandler(async (req, res, next) => {
 
   fs.unlink(`${oldpath}/${imagepath}`, async (err) => {
     if (err) {
-      apiResponses(res, 500, err.message);
+      apiResponses(res, 500, "err.message");
     } else {
       await subCategoryModel.findOneAndDelete({ _id: id });
       await categoryModel.findOneAndUpdate(
