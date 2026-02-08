@@ -4,6 +4,7 @@ const { apiResponses } = require("../utils/apiResponses");
 const { asyncHandler } = require("../utils/asyncHandler");
 const userModel = require("../models/user.model");
 const { sendMerchantRequestEmail } = require("../helpers/sendEmailtoAdminforMerchantreq");
+const { sendMerchantStatusEmail } = require("../helpers/sendMerchantStatusEmail");
 
 exports.applyMerchantController = asyncHandler(async (req, res, next) => {
   let { user, storename, logo, phone } = req.body; // status hobe na cause ota just admin handle korbe
@@ -41,19 +42,42 @@ exports.applyMerchantController = asyncHandler(async (req, res, next) => {
 });
 
 exports.merchantApporovalController = asyncHandler(async (req, res, next) => {
-  let { id } = req.params;
+    let { id } = req.params;
+    let { status } = req.body;
 
-  let { status } = req.body;
+    // 1. Update the Merchant Status
+    let merchant = await merchantModel.findOneAndUpdate(
+        { _id: id },
+        { status },
+        { new: true, runValidators: true }
+    );
 
-  let merchant = await merchantModel.findOneAndUpdate(
-    { _id: id },          // route e jei id pass krbo ta database e khujbo
-    { status },           // admin je status dibe ta update hobe
-    { new: true , runValidators: true},
-  );
- 
-  apiResponses(res,200, "Checked and updated by Admin",merchant)
+    // 2. Check if Merchant exists BEFORE trying to find the user
+    if (!merchant) {
+        return apiResponses(res, 404, "Merchant not found");
+    }
 
+    // 3. Find the User using the ID stored IN the merchant document
+    // logic: The merchant document contains the link to the user (merchant.user)
+    let userdata = await userModel.findById(merchant.user);
 
+    // Safety check: ensure user actually exists
+    if (!userdata) {
+        return apiResponses(res, 404, "Linked User not found");
+    }
 
+    try {
+        await sendMerchantStatusEmail(
+            userdata.email,  // This will now work because userdata is found
+            userdata.Name,   // Make sure this matches your User Schema (e.g., name, fullName, username)
+            status,
+            merchant.storename // Make sure this matches your Schema (storename vs storeName)
+        );
+    } catch (error) {
+        console.error("Failed to send status email:", error.message);
+    }
+
+    apiResponses(res, 200, `Merchant status updated to ${status} and user notified.`, merchant);
 });
+
 

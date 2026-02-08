@@ -8,7 +8,7 @@ const merchantrouter = express.Router();
 
 merchantrouter.post("/apply-merchant",applyMerchantController);
 
-merchantrouter.post("/merchantapprove/:id",merchantApporovalController)
+merchantrouter.post("/merchantapprove/:id",isLogged,isAuthorRole("admin"),merchantApporovalController)
 
 module.exports = merchantrouter 
 
