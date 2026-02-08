@@ -1,3 +1,4 @@
+const { sendEmail } = require("../helpers/sendEmail");
 const merchantModel = require("../models/merchant.model");
 const { apiResponses } = require("../utils/apiResponses");
 const { asyncHandler } = require("../utils/asyncHandler");
@@ -18,6 +19,7 @@ exports.applyMerchantController = asyncHandler(async (req, res, next) => {
     });
 
     await merchantapply.save();
+   sendEmail(process.env.AUTH_EMAIL)
     apiResponses(res, 200, "Your request for merchant post has been sent");
   }
 });
@@ -30,10 +32,10 @@ exports.merchantApporovalController = asyncHandler(async (req, res, next) => {
   let merchant = await merchantModel.findOneAndUpdate(
     { _id: id },          // route e jei id pass krbo ta database e khujbo
     { status },           // admin je status dibe ta update hobe
-    { new: true },
+    { new: true , runValidators: true},
   );
  
-  apiResponses(res,200, "Checked and updated by Admin")
+  apiResponses(res,200, "Checked and updated by Admin",merchant)
 
 
 

@@ -18,7 +18,7 @@ const merchantSchema = new mongoose.Schema({
     },
   status : {
     type : String,
-    enum : ["pending", "Rejected" , "Approved"],
+    enum : ["pending", "rejected" , "approved"],
     default : "pending"
   }
    
