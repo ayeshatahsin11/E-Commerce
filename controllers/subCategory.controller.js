@@ -37,9 +37,30 @@ exports.subcategoryController = asyncHandler(async (req, res, next) => {
 
 exports.updateSubcategoryController = asyncHandler(async (req, res, next) => {
   let { id } = req.params;
-  let { Name, category } = req.body;
+ let { Name, category } = req.body || {};
 
-  if (category) {
+    let { filename } = req.file || {};  //access image through this, default vabe khali thakbe age
+  
+    // req.file = access for image, image update korar age ta delete kore nite hobe, then update hobe new img diye
+  
+    if (req.file) {
+      let subcategory = await subCategoryModel.findOne({ _id: id });
+      let filepath = subcategory.image.split("/"); // image's file location
+      let imagepath = filepath[filepath.length - 1];
+      let oldpath = path.join(__dirname, "../uploads"); // folder location
+  
+      fs.unlink(`${oldpath}/${imagepath}`, async (err) => {
+        if (err) {
+          apiResponses(res, 500, err.message);
+        } else {
+          let image = `${process.env.SERVER_URL}/${filename}`;
+          subcategory.image = image;
+          await subcategory.save();
+          apiResponses(res, 200, "Image updated");
+        }
+      });
+    } else {
+      if (category) {
     await subCategoryModel.findOneAndUpdate(
       { _id: id }, // je id pass korechi ta subcategorymodel e khujbe
       { Name, category }, // req.body er moddhe je new info send krbo ta diye update krbe
@@ -60,8 +81,9 @@ exports.updateSubcategoryController = asyncHandler(async (req, res, next) => {
     );
     apiResponses(res, 200, "Subcategory's Name updated");
   }
-});  //add image part here, copu from category, then test
-
+    }
+  });
+   
 exports.deleteSubCtaegoryController = asyncHandler(async (req, res, next) => {
   let { id } = req.params;
 

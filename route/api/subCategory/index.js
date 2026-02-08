@@ -13,7 +13,7 @@ subcategoryrouter.post("/add-subcategory",isLogged,isAuthorRole("admin","merchan
 
 subcategoryrouter.get("/getsubcategory",getSubCategoryControllerr)
 
-subcategoryrouter.patch("/updatesubcategory/:id",updateSubcategoryController)
+subcategoryrouter.patch("/updatesubcategory/:id",upload.single("Image"),updateSubcategoryController)
 
 subcategoryrouter.delete("/deletesubcategory/:id",deleteSubCtaegoryController)
 
