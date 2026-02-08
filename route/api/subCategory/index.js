@@ -13,9 +13,9 @@ subcategoryrouter.post("/add-subcategory",isLogged,isAuthorRole("admin","merchan
 
 subcategoryrouter.get("/getsubcategory",getSubCategoryControllerr)
 
-subcategoryrouter.patch("/updatesubcategory/:id",upload.single("Image"),updateSubcategoryController)
+subcategoryrouter.patch("/updatesubcategory/:id",isLogged,isAuthorRole("admin","merchant"),upload.single("Image"),updateSubcategoryController)
 
-subcategoryrouter.delete("/deletesubcategory/:id",deleteSubCtaegoryController)
+subcategoryrouter.delete("/deletesubcategory/:id",isLogged,isAuthorRole("admin","merchant"),deleteSubCtaegoryController)
 
 module.exports = subcategoryrouter 
 
