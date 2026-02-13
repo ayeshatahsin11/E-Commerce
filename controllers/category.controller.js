@@ -6,7 +6,7 @@ const fs = require("fs");
 const slugify = require("slugify");
 
 exports.categoryController = asyncHandler(async (req, res, next) => {
-  let { Name, discount, subcategory } = req.body;
+  let { Name, discount, subcategory , products } = req.body;
   let { filename } = req.file;
   let image = `${process.env.SERVER_URL}/${filename}`;
 
@@ -102,3 +102,5 @@ exports.deleteCategoryController = asyncHandler(async (req, res, next) => {
     }
   });
 });
+
+

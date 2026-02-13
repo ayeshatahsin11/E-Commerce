@@ -19,7 +19,7 @@ exports.addProdcutsController = asyncHandler(async (req, res, next) => {
     trim: true, // trim leading and trailing replacement chars, defaults to `true`
   });
 
-  let addedProdcuts = new productModel({
+  let addedProducts = new productModel({
     title,
     slug,
     description,
@@ -29,14 +29,14 @@ exports.addProdcutsController = asyncHandler(async (req, res, next) => {
     category,
     image,
   });
-  await addedProdcuts.save();
+  await addedProducts.save();
 
   await categoryModel.findOneAndUpdate(
     // this is called referencing
     { _id: category }, // je id diyechi subcategory te, ta giye khujbe and dekhbe je kon category er part
-    { $push: { products: products._id } }, // khujar por oi category er subcategory field e elements gulo push krbe
+    { $push: { products: addedProducts._id } }, // khujar por oi category er subcategory field e elements gulo push krbe
     { new: true },
   );
 
-  apiResponses(res, 201, "Product Created", addedProdcuts);
+  apiResponses(res, 201, "Product Created", addedProducts);
 });
