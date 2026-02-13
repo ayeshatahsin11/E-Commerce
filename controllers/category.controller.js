@@ -23,6 +23,7 @@ exports.categoryController = asyncHandler(async (req, res, next) => {
     discount,
     subcategory,
     image,
+    products,
   });
   await category.save();
 
@@ -32,11 +33,10 @@ exports.categoryController = asyncHandler(async (req, res, next) => {
 exports.getAllCategories = asyncHandler(async (req, res, next) => {
   let allCategory = await categoryModel
     .find({})
-    .populate({ path: "subcategory" ,
-      select : "_id Name slug image"
-    },// to select that which fields of subcategory we want to show at UI
-
-    ).select("_id image Name subcategory slug"); // will show all the info inside subcategory
+    .populate(
+      { path: "subcategory", select: "_id Name slug image" }, // to select that which fields of subcategory we want to show at UI
+    )
+    .select("_id image Name subcategory slug"); // will show all the info inside subcategory
 
   apiResponses(res, 200, "Categories fetched", allCategory);
 });

@@ -4,6 +4,7 @@ const path = require("path");
 const fs = require("fs");
 const slugify = require("slugify");
 const productModel = require("../models/product.model");
+const categoryModel = require("../models/category.model");
 
 exports.addProdcutsController = asyncHandler(async (req, res, next) => {
   let { title, description, price, discountPrice, variantType, category } =
@@ -29,6 +30,13 @@ exports.addProdcutsController = asyncHandler(async (req, res, next) => {
     image,
   });
   await addedProdcuts.save();
+
+  await categoryModel.findOneAndUpdate(
+    // this is called referencing
+    { _id: category }, // je id diyechi subcategory te, ta giye khujbe and dekhbe je kon category er part
+    { $push: { products: products._id } }, // khujar por oi category er subcategory field e elements gulo push krbe
+    { new: true },
+  );
 
   apiResponses(res, 201, "Product Created", addedProdcuts);
 });

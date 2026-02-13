@@ -24,7 +24,13 @@ required : [true, "image is required"],
         type : mongoose.Types.ObjectId,  // to create relation with categories
         ref : "SubCategory"             // giving the reference to category model
     }
-   ]
+   ],
+   products:[                           // ekhane array ache, ekta category er moddhe onkgulo subcategory thakte pare
+    {
+        type : mongoose.Types.ObjectId, 
+        ref : "Product"          
+    }
+   ],
 
 }, {
     timestamps :true
