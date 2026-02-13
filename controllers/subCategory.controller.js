@@ -101,7 +101,7 @@ exports.deleteSubCtaegoryController = asyncHandler(async (req, res, next) => {
       apiResponses(res, 500, "err.message");
     } else {
       await subCategoryModel.findOneAndDelete({ _id: id });
-      await categoryModel.findOneAndUpdate(
+      await categoryModel.updateMany(
         { subcategory: id },      // je id pass korechi shei subcategory khujbo
         { $pull: { subcategory: id } },      // khuje then eta dlt kore dibo, pull = delete
       );
